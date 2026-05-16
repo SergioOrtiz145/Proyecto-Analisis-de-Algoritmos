@@ -97,7 +97,7 @@ class Board:
     def remove( self, id_reg ):
         # elimina una region por su id
         if id_reg not in self.m_Regions:
-            return ( False, f'Region {id_reg} not founded' )
+            return ( False, f'Region {id_reg} not found' )
         r1, c1, r2, c2 = self.m_Regions[ id_reg ]
         for r in range( r1, r2 + 1 ):
             for c in range( c1, c2 + 1 ):
