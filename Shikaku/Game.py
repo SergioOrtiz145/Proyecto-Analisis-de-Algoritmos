@@ -14,7 +14,7 @@ class Game:
     def solve( self ):
         while not self.m_Board.finished():
             print( str( self.m_Board ) )
-            print( '─' * 42 )
+            print( '-' * 42 )
 
             # el jugador decide qué rectángulo colocar
             accion = self.m_Player.play()
@@ -38,9 +38,9 @@ class Game:
                 pass
             
         print( str( self.m_Board ) )
-        print( '─' * 42 )
+        print( '-' * 42 )
 
         if self.m_Board.has_won():
-            print( '¡Ganaste! :-D  El tablero está completo.' )
+            print( 'You won! :-D  The board is complete.' )
         else:
-            print( 'El tablero está incompleto' )
+            print( 'The board is incomplete.' )

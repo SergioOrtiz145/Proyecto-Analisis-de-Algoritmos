@@ -23,7 +23,7 @@ class Player:
         self.m_Moves   = 0
         self._queue    = []
 
-        print( '\n  [Solver] Calculando solución…' )
+        print( '\n  [Solver] Calculating solution…' )
         self._compute_solution()
 
     #  Calcular la solución completa de una vez
@@ -40,12 +40,12 @@ class Player:
         solution, elapsed = solver.solve()
 
         if solution is None:
-            print( '  [Solver] ✗ No se encontró solución.' )
+            print( '  [Solver] No solution found.' )
             return
 
-        print( f'  [Solver] ✓ Solución encontrada en {elapsed:.4f}s '
+        print( f'  [Solver] Solution found in {elapsed:.4f}s '
                f'({solver.nodes_explored} nodos explorados, '
-               f'profundidad máx. {solver.max_depth})' )
+               f'max deep. {solver.max_depth})' )
 
         # Cargar la cola: un movimiento 'colocar' por cada rectángulo
         for clue, ( r1, c1, r2, c2 ) in solution.items():
@@ -63,7 +63,7 @@ class Player:
         accion = self._queue.pop( 0 )
         self.m_Moves += 1
         r1, c1, r2, c2 = accion[ 'coords' ]
-        print( f'  [Solver] Colocando rectángulo ({r1},{c1}) → ({r2},{c2})' )
+        print( f'  [Solver] Placing rectangle ({r1},{c1}) → ({r2},{c2})' )
         return accion
 
     #  Historial
