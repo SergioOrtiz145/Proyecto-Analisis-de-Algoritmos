@@ -1,10 +1,11 @@
 import time
 
 
-def generar_rectangulos_candidatos(r, c, area, ancho, alto):
+def generate_candidate_rectangles(r, c, area, ancho, alto):
     candidatos = []
 
     # Generar todos los rectángulos posibles, el área es igual a la pista
+    # Buscar todas las esquinas superiores izquierdas (r1, c1) que puedan contener la pista
     for r1 in range(max(0, r - area + 1), r + 1):
 
         for c1 in range(max(0, c - area + 1), c + 1):
@@ -14,9 +15,11 @@ def generar_rectangulos_candidatos(r, c, area, ancho, alto):
 
                 if area % altura != 0:
                     continue
-
+                
+                # Calcular ancho
                 ancho_rect = area // altura
 
+                # Calcular esquina inferior derecha
                 r2 = r1 + altura - 1
                 c2 = c1 + ancho_rect - 1
 
@@ -26,6 +29,7 @@ def generar_rectangulos_candidatos(r, c, area, ancho, alto):
 
                 # La pista debe estar dentro del rectángulo
                 if r1 <= r <= r2 and c1 <= c <= c2:
+                    # Agregar candidato
                     candidatos.append(
                         (r1, c1, r2, c2)
                     )
@@ -33,7 +37,7 @@ def generar_rectangulos_candidatos(r, c, area, ancho, alto):
     return candidatos
 
 
-def obtener_celdas(r1, c1, r2, c2):
+def get_cells(r1, c1, r2, c2):
     celdas = set()
 
     # Obtener todas las posiciones ocupadas por el rectángulo
@@ -51,10 +55,10 @@ class MRVFCSolver:
         self.alto = alto
 
         # Métricas para el desempeño
-        self.nodes_explored = 0
+        self.nodos_explorados = 0
         self.backtracks = 0
-        self.max_depth = 0
-        self.pruned_branches = 0
+        self.max_profundidad = 0
+        self.ramas_podadas = 0
 
         self.pistas = dict(pistas)
 
@@ -63,7 +67,7 @@ class MRVFCSolver:
         # Construir el dominio inicial de cada pista
         for posicion, numero in pistas.items():
             self.dominios[posicion] = (
-                generar_rectangulos_candidatos(
+                generate_candidate_rectangles(
                     posicion[0],
                     posicion[1],
                     numero,
@@ -75,7 +79,7 @@ class MRVFCSolver:
     def solve(self):
         inicio = time.perf_counter()
 
-        # Copia de trabajo de los dominios
+        # Copia de los dominios
         dominios_actuales = {}
 
         for pista, dominio in self.dominios.items():
@@ -86,23 +90,17 @@ class MRVFCSolver:
 
         # Celdas ocupadas por rectángulos ya elegidos
         ocupadas = set()
-
-        solucion = self._backtrack(
-            dominios_actuales,
-            asignadas,
-            ocupadas,
-            0
-        )
-
+        
+        solucion = self._backtrack(dominios_actuales, asignadas,ocupadas, 0)
         tiempo = time.perf_counter() - inicio
 
         return solucion, tiempo
 
     def _backtrack(self, dominios, asignadas, ocupadas, profundidad):
-        self.nodes_explored += 1
+        self.nodos_explorados += 1
 
-        if profundidad > self.max_depth:
-            self.max_depth = profundidad
+        if profundidad > self.max_profundidad:
+            self.max_profundidad = profundidad
 
         # Caso base: todas las pistas ya tienen rectángulo asignado y no se superponen
         if len(asignadas) == len(self.pistas):
@@ -111,25 +109,24 @@ class MRVFCSolver:
         # MRV: escoger la pista con menos candidatos disponibles
         pista = self._mrv( dominios, asignadas )
 
-        # Intentar cada rectángulo posible
+        # Intentar cada rectángulo (candidato) posible
         for rectangulo in dominios[pista]:
-            celdas_rectangulo = obtener_celdas(
+            celdas_rectangulo = get_cells(
                 rectangulo[0],
                 rectangulo[1],
                 rectangulo[2],
                 rectangulo[3]
             )
 
-            # No dejar que haya superposición
+            # No dejar que haya superposición (intersección)
             if len(celdas_rectangulo & ocupadas) > 0:
                 continue
 
             # Asignar temporalmente el rectángulo
             asignadas[pista] = rectangulo
 
-            nuevas_ocupadas = (
-                ocupadas | celdas_rectangulo
-            )
+            # Actualizar celdas ocupadas (unión)
+            nuevas_ocupadas = (ocupadas | celdas_rectangulo)
 
             # Forward Checking: actualizar dominios restantes
             nuevos_dominios, vacio = (
@@ -137,24 +134,20 @@ class MRVFCSolver:
             )
 
             if vacio:
-                # Alguna pista se quedó sin opciones
-                self.pruned_branches += 1
+                # Alguna pista se quedó sin opciones, se poda
+                self.ramas_podadas += 1
 
             else:
-                resultado = self._backtrack(
-                    nuevos_dominios,
-                    asignadas,
-                    nuevas_ocupadas,
-                    profundidad + 1
-                )
+                # Intentar resolver el resto del tablero
+                resultado = self._backtrack(nuevos_dominios, asignadas, nuevas_ocupadas, profundidad + 1)
 
                 # Solución encontrada
                 if resultado is not None:
                     return resultado
 
-            # Deshacer decisión (Backtracking)
+            # Deshacer decisión, hacer Backtracking
             del asignadas[pista]
-
+            
             self.backtracks += 1
 
         return None
@@ -189,7 +182,7 @@ class MRVFCSolver:
 
             # Eliminar candidatos incompatibles
             for rectangulo in candidatos:
-                celdas = obtener_celdas(
+                celdas = get_cells(
                     rectangulo[0],
                     rectangulo[1],
                     rectangulo[2],
