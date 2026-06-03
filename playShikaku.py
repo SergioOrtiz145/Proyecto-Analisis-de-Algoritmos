@@ -1,7 +1,8 @@
 import importlib.util, sys
 import Shikaku.Game
 from Shikaku.Generator import generate_by_difficulty, DIFICULTADES
-from Shikaku.Player.Human  import Player as HumanPlayer
+from Shikaku.Player.Human import Player as HumanPlayer
+from Shikaku.Player.Synthetic import Player as SyntheticPlayer
 
 def ImportLibrary( module_name, filename ):
   spec = importlib.util.spec_from_file_location( module_name, filename )
@@ -24,7 +25,7 @@ def lanzar( data, PlayerClass ):
     player = PlayerClass()
     w, h   = data[ 'size' ]
     hints  = data[ 'hints' ]
-    print( f'\n  Level  : {data["name"]}' )
+    print( f'\n  Nivel  : {data["name"]}' )
     game = Shikaku.Game.Game( w, h, hints, player )
     game.solve()
  
@@ -36,29 +37,44 @@ def main( argv ):
         if argv[ 0 ].lower() == 'random':
             if len( argv ) < 3:
                 print( 'Usage: python playShikaku.py random <difficulty> <player> [seed]' )
-                print( f'Difficulties: {list(DIFICULTADES.keys())}' )
+                print( f'Dificultades: {list(DIFICULTADES.keys())}' )
                 sys.exit( 1 )
+                
             dif, nom_player = argv[1].lower(), argv[2].lower()
             seed            = int( argv[3] ) if len(argv) >= 4 else None
-            PlayerClass     = HumanPlayer
+            
+            if nom_player == "human":
+                PlayerClass = HumanPlayer
+
+            elif nom_player == "synthetic":
+                PlayerClass = SyntheticPlayer
+
+            else:
+                print( f'Jugador inválido "{nom_player}". ' 'Opciones: human, synthetic') 
+                sys.exit(1)
+            
             if dif not in DIFICULTADES:
-                print( f'Invalid difficulty "{dif}". Options: {list(DIFICULTADES.keys())}' )
+                print( f'Dificultad Invalida "{dif}". Opciones: {list(DIFICULTADES.keys())}' )
                 sys.exit( 1 )
+                
             if PlayerClass is None:
-                print( f'Invalid player "{nom_player}". Options: Human Player' )
+                print( f'Jugador Invalido "{nom_player}". Opciones: Human Player' )
                 sys.exit( 1 )
-            print( f'  Generating random puzzle ({dif})…' )
+                
+            print( f'  Generando tablero random ({dif})…' )
             data = generate_by_difficulty( dif, seed=seed )
         else:
             # nivel fijo
             num_nivel, nom_player = int( argv[0] ), argv[1].lower()
             #data        = load_level( num_nivel )
             PlayerClass = HumanPlayer
+            
             if data is None:
-                print( f'Level {num_nivel} does not exist. Valid: 1-4' )
+                print( f'Nivel {num_nivel} no existe. Valido: 1-4' )
                 sys.exit( 1 )
+                
             if PlayerClass is None:
-                print( f'Invalid player "{nom_player}". Options: Human Player' )
+                print( f'Jugador Invalido "{nom_player}". Opciones: Human Player' )
                 sys.exit( 1 )
 
  
@@ -68,6 +84,6 @@ if __name__ == '__main__':
     try:
         main( sys.argv[ 1: ] )
     except KeyboardInterrupt:
-        print( '\n\n  Game interrupted. See you soon!\n' )
+        print( '\n\n  Juego interrumpido. \n' )
 
       

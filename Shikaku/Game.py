@@ -16,10 +16,10 @@ class Game:
             print( str( self.m_Board ) )
             print( '-' * 42 )
 
-            # el jugador decide qué rectángulo colocar
+            # El jugador decide qué rectángulo colocar
             accion = self.m_Player.play()
 
-            # procesar la acción
+            # Procesar la acción
             if accion is None:
                 # jugador abandona
                 break
@@ -41,6 +41,6 @@ class Game:
         print( '-' * 42 )
 
         if self.m_Board.has_won():
-            print( 'You won! :-D  The board is complete.' )
+            print( 'Ganaste! : El tablero esta completo.' )
         else:
-            print( 'The board is incomplete.' )
+            print( 'El tablero esta incompleto.' )

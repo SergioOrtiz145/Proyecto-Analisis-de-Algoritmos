@@ -3,19 +3,19 @@ import random
 MAX_RETRIES = 200   # intentos máximos de generación
 
 
-# generar puzzle
+# Generar puzzle
 def generate( w, h, seed=None ):
     
     rng = random.Random( seed )
 
     for intento in range( 1, MAX_RETRIES + 1 ):
 
-        # paso 1: generar una partición aleatoria del tablero
+        # Generar una partición aleatoria del tablero
         solucion = _partition( w, h, rng )
         if solucion is None:
             continue   # greedy no cubrió todo, reintentar
 
-        # paso 2: elegir una pista por rectángulo
+        # Elegir una pista por rectángulo
         hints = _extract_hints( solucion, rng )
 
         return {
@@ -25,8 +25,6 @@ def generate( w, h, seed=None ):
                 'tip'  : f'Randomly generated puzzle — {len(hints)} hints.',
             }
             
-
-
     raise RuntimeError(
         f'Could not generate a valid puzzle for {w}×{h} '
         f'after {MAX_RETRIES} attempts.'
@@ -34,18 +32,18 @@ def generate( w, h, seed=None ):
 
 
 
-# Paso 1 — partición aleatoria
+# Partición aleatoria
 
 def _partition( w, h, rng ):
     total   = w * h
-    libre   = list( range( total ) )   # índices libres, en orden
+    libre   = list( range( total ) )   # Índices libres, en orden
     ocupado = [ False ] * total
     rects   = []
 
-    max_area = max( 2, ( w * h ) // 3 )   # cap de área para evitar rects enormes
+    max_area = max( 2, ( w * h ) // 3 )   # Cap de área para evitar rects enormes
 
     while libre:
-        # celda libre más arriba-izquierda
+        # Celda libre más arriba-izquierda
         k    = libre[ 0 ]
         r0   = k // w
         c0   = k % w
@@ -53,18 +51,18 @@ def _partition( w, h, rng ):
         candidatos = _rects_from( r0, c0, w, h, ocupado, max_area )
 
         if not candidatos:
-            return None   # sin opciones → fallo
+            return None   # Sin opciones → fallo
 
-        # ponderación: favorece áreas entre 2 y 6
+        # Ponderación: favorece áreas entre 2 y 6
         pesos = [ _weight( r1, c1, r2, c2 ) for r1, c1, r2, c2 in candidatos ]
         rect  = rng.choices( candidatos, weights=pesos, k=1 )[ 0 ]
 
         r1, c1, r2, c2 = rect
         rects.append( rect )
+        
         for r in range( r1, r2 + 1 ):
             for c in range( c1, c2 + 1 ):
                 ocupado[ r * w + c ] = True
-
 
         libre = [ i for i in libre if not ocupado[ i ] ]
 
@@ -75,17 +73,22 @@ def _partition( w, h, rng ):
 
 def _rects_from( r0, c0, w, h, ocupado, max_area ):
     candidatos = []
+    
     for r2 in range( r0, h ):
+        
         for c2 in range( c0, w ):
             area = ( r2 - r0 + 1 ) * ( c2 - c0 + 1 )
+            
             if area > max_area:
                 break   # columna más ancha tampoco servirá en esta fila
+            
             # verificar que todas las celdas estén libres
             ok = all(
                 not ocupado[ r * w + c ]
                 for r in range( r0, r2 + 1 )
                 for c in range( c0, c2 + 1 )
             )
+            
             if ok:
                 candidatos.append( ( r0, c0, r2, c2 ) )
             else:
@@ -95,7 +98,6 @@ def _rects_from( r0, c0, w, h, ocupado, max_area ):
     return candidatos
 
 
-
 def _weight( r1, c1, r2, c2 ):
     area = ( r2 - r1 + 1 ) * ( c2 - c1 + 1 )
     if area == 1:
@@ -103,7 +105,6 @@ def _weight( r1, c1, r2, c2 ):
     if 2 <= area <= 8:
         return 3.0
     return 1.0       # áreas grandes, peso neutro
-
 
 
 def _extract_hints( solucion, rng ):
