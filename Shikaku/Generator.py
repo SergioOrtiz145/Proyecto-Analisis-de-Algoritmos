@@ -1,134 +1,188 @@
 import random
 
-MAX_RETRIES = 200   # intentos máximos de generación
+MAX_RETRIES = 200   # Máximo número de intentos para generar un tablero válido
 
 
 # Generar puzzle
-def generate( w, h, seed=None ):
-    
-    rng = random.Random( seed )
+def generate( w, h, seed = None ):
+
+    generador_aleatorio = random.Random( seed )
 
     for intento in range( 1, MAX_RETRIES + 1 ):
 
         # Generar una partición aleatoria del tablero
-        solucion = _partition( w, h, rng )
-        if solucion is None:
-            continue   # greedy no cubrió todo, reintentar
+        solucion = _partition( w, h, generador_aleatorio )
 
-        # Elegir una pista por rectángulo
-        hints = _extract_hints( solucion, rng )
+        if solucion is None:
+            continue
+
+        # Elegir una pista para cada rectángulo
+        pistas = _extract_hints( solucion, generador_aleatorio )
 
         return {
-                'name' : f'Random {w}×{h} (seed={seed or "?"})',
-                'size' : ( w, h ),
-                'hints': hints,
-                'tip'  : f'Randomly generated puzzle — {len(hints)} hints.',
-            }
-            
+            'name' : f'Aleatorio {w}×{h} (seed={seed or "?"})',
+            'size' : ( w, h ),
+            'hints': pistas,
+            'tip'  : f'Tablero generado aleatoriamente - {len( pistas )} pistas.'
+        }
+
     raise RuntimeError(
-        f'Could not generate a valid puzzle for {w}×{h} '
-        f'after {MAX_RETRIES} attempts.'
+        f'No fue posible generar un tablero válido de {w}×{h} '
+        f'después de {MAX_RETRIES} intentos.'
     )
 
 
+# Crear una partición aleatoria del tablero
+def _partition( w, h, generador_aleatorio ):
 
-# Partición aleatoria
+    total_celdas = w * h
 
-def _partition( w, h, rng ):
-    total   = w * h
-    libre   = list( range( total ) )   # Índices libres, en orden
-    ocupado = [ False ] * total
-    rects   = []
+    libres = list( range( total_celdas ) )
+    ocupadas = [ False ] * total_celdas
 
-    max_area = max( 2, ( w * h ) // 3 )   # Cap de área para evitar rects enormes
+    rectangulos = []
 
-    while libre:
-        # Celda libre más arriba-izquierda
-        k    = libre[ 0 ]
-        r0   = k // w
-        c0   = k % w
+    # Limitar el tamaño máximo de los rectángulos
+    area_maxima = max( 2, ( w * h ) // 3 )
 
-        candidatos = _rects_from( r0, c0, w, h, ocupado, max_area )
+    while libres:
+
+        # Tomar la celda libre más arriba y a la izquierda
+        indice = libres[ 0 ]
+
+        fila_inicial = indice // w
+        columna_inicial = indice % w
+
+        candidatos = _rects_from(
+            fila_inicial,
+            columna_inicial,
+            w,
+            h,
+            ocupadas,
+            area_maxima
+        )
 
         if not candidatos:
-            return None   # Sin opciones → fallo
+            return None
 
-        # Ponderación: favorece áreas entre 2 y 6
-        pesos = [ _weight( r1, c1, r2, c2 ) for r1, c1, r2, c2 in candidatos ]
-        rect  = rng.choices( candidatos, weights=pesos, k=1 )[ 0 ]
+        # Favorecer rectángulos de tamaño medio
+        pesos = [
+            _weight( r1, c1, r2, c2 )
+            for r1, c1, r2, c2 in candidatos
+        ]
 
-        r1, c1, r2, c2 = rect
-        rects.append( rect )
-        
-        for r in range( r1, r2 + 1 ):
-            for c in range( c1, c2 + 1 ):
-                ocupado[ r * w + c ] = True
+        rectangulo = generador_aleatorio.choices(
+            candidatos,
+            weights = pesos,
+            k = 1
+        )[ 0 ]
 
-        libre = [ i for i in libre if not ocupado[ i ] ]
+        r1, c1, r2, c2 = rectangulo
+
+        rectangulos.append( rectangulo )
+
+        # Marcar las celdas del rectángulo como ocupadas
+        for fila in range( r1, r2 + 1 ):
+            for columna in range( c1, c2 + 1 ):
+                ocupadas[ fila * w + columna ] = True
+
+        # Actualizar lista de celdas libres
+        libres = [
+            indice
+            for indice in libres
+            if not ocupadas[ indice ]
+        ]
+
+    return rectangulos
 
 
-    return rects
+def _rects_from(
+    fila_inicial,
+    columna_inicial,
+    w,
+    h,
+    ocupadas,
+    area_maxima
+):
 
-
-
-def _rects_from( r0, c0, w, h, ocupado, max_area ):
     candidatos = []
-    
-    for r2 in range( r0, h ):
-        
-        for c2 in range( c0, w ):
-            area = ( r2 - r0 + 1 ) * ( c2 - c0 + 1 )
-            
-            if area > max_area:
-                break   # columna más ancha tampoco servirá en esta fila
-            
-            # verificar que todas las celdas estén libres
-            ok = all(
-                not ocupado[ r * w + c ]
-                for r in range( r0, r2 + 1 )
-                for c in range( c0, c2 + 1 )
+
+    for fila_final in range( fila_inicial, h ):
+        for columna_final in range( columna_inicial, w ):
+            area = (
+                ( fila_final - fila_inicial + 1 ) *
+                ( columna_final - columna_inicial + 1 )
             )
-            
-            if ok:
-                candidatos.append( ( r0, c0, r2, c2 ) )
+
+            if area > area_maxima:
+                break
+
+            # Verificar que todas las celdas estén libres
+            valido = all(
+                not ocupadas[ fila * w + columna ]
+                for fila in range( fila_inicial, fila_final + 1 )
+                for columna in range( columna_inicial, columna_final + 1 )
+            )
+
+            if valido:
+                candidatos.append(
+                    (
+                        fila_inicial,
+                        columna_inicial,
+                        fila_final,
+                        columna_final
+                    )
+                )
             else:
-                break   # si esta columna falla, las siguientes también
-        
-    
+                break
+
     return candidatos
 
 
 def _weight( r1, c1, r2, c2 ):
     area = ( r2 - r1 + 1 ) * ( c2 - c1 + 1 )
+
     if area == 1:
-        return 0.3   # penalizar celdas solitarias
+        return 0.3   # Penalizar rectángulos de una sola celda
+
     if 2 <= area <= 8:
-        return 3.0
-    return 1.0       # áreas grandes, peso neutro
+        return 3.0   # Favorecer áreas medianas
+
+    return 1.0       # Peso normal para áreas grandes
 
 
-def _extract_hints( solucion, rng ):
-    hints = {}
+def _extract_hints( solucion, generador_aleatorio ):
+    pistas = {}
+
     for r1, c1, r2, c2 in solucion:
-        area  = ( r2 - r1 + 1 ) * ( c2 - c1 + 1 )
-        celdas = [
-            ( r, c )
-            for r in range( r1, r2 + 1 )
-            for c in range( c1, c2 + 1 )
-        ]
-        pos = rng.choice( celdas )
-        hints[ pos ] = area
 
-    return hints
+        area = ( ( r2 - r1 + 1 ) * ( c2 - c1 + 1 ) )
+
+        celdas = [
+            ( fila, columna )
+            for fila in range( r1, r2 + 1 )
+            for columna in range( c1, c2 + 1 )
+        ]
+
+        posicion_pista = generador_aleatorio.choice( celdas )
+        pistas[ posicion_pista ] = area
+
+    return pistas
+
 
 DIFICULTADES = {
-    'facil'  : ( 4, 4 ),
-    'medio'  : ( 6, 6 ),
-    'dificil': ( 8, 8 ),
-    'experto': ( 10, 10 ),
+    'facil'   : ( 4, 4 ),
+    'medio'   : ( 6, 6 ),
+    'dificil' : ( 8, 8 ),
+    'experto' : ( 10, 10 )
 }
 
-def generate_by_difficulty( dificultad, seed=None ):
-    w, h = DIFICULTADES[ dificultad ]
-    return generate( w, h, seed=seed )
 
+def generate_by_difficulty( dificultad, seed = None ):
+    ancho, alto = DIFICULTADES[ dificultad ]
+
+    return generate(
+        ancho,
+        alto,
+        seed = seed
+    )
