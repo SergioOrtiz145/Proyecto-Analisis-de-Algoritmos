@@ -32,12 +32,12 @@ class Player:
 
             # ayuda
             if cmd in ( '?', 'ayuda', 'help', 'h' ):
-                print( self._ayuda() )
+                print( self._help() )
                 return { 'tipo': 'noop' }
 
             # pistas
             if cmd in ( 'p', 'pistas' ):
-                self._mostrar_pistas()
+                self._show_hints()
                 return { 'tipo': 'noop' }
 
             # deshacer
@@ -73,6 +73,9 @@ class Player:
                 print( f'  Comando no reconocido: "{raw}". Escribe ? para ayuda.' )
                 continue
 
+    def report( self, id_reg ):
+        self.m_History.append( id_reg )
+    
     def _help( self ):
         return (
             '\n╔══════════════════════════════════════════╗\n'
@@ -90,3 +93,9 @@ class Player:
             '║  El área del rect. debe = número pista.   ║\n'
             '╚══════════════════════════════════════════╝'
         )
+
+    def _show_hints( self ):
+        print( '\n  Pistas del tablero:' )
+        for ( r, c ), area in sorted( self.m_Hints.items() ):
+            print( f'  ({r},{c}) → {area}' )
+        print()

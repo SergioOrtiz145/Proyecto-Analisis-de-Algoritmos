@@ -56,7 +56,7 @@ class Board:
 
         # dentro del tablero
         if not ( self.inside( r1, c1 ) and self.inside( r2, c2 ) ):
-            return ( -1, False, 'Rectangle outside the board' )
+            return ( -1, False, 'Rectangulo fuera del tablero' )
 
         celdas = [
             ( r, c )
@@ -68,22 +68,22 @@ class Board:
         # celdas libres
         for r, c in celdas:
             if self.m_Grid[ r * self.m_Width + c ][ 'region' ] is not None:
-                return ( -1, False, f'The cell ({r},{c}) is already in other region' )
+                return ( -1, False, f'La celda ({r},{c}) ya pertenece a otra región.' )
         
 
         # exactamente una pista dentro
         pistas = [ ( r, c ) for r, c in celdas
                    if self.m_Grid[ r * self.m_Width + c ][ 'hint' ] is not None ]
         if len( pistas ) == 0:
-            return ( -1, False, 'Rectangle does not contain any hint.' )
+            return ( -1, False, 'El rectángulo no contiene ninguna pista' )
         if len( pistas ) > 1:
-            return ( -1, False, f'Rectangle contains {len(pistas)} hints, but can only have 1.' )
+            return ( -1, False, f'El rectángulo contiene {len(pistas)} pistas, pero solo puede tener 1' )
 
         # el área tiene que ser igual al número de la pista
         numero = self.m_Grid[ pistas[0][0] * self.m_Width + pistas[0][1] ][ 'hint' ]
         if area != numero:
             return ( -1, False,
-                     f'Area {area} and hint {numero} are not equal in ({pistas[0][0]},{pistas[0][1]}).' )
+                     f'Area {area} y pista {numero} no son iguales en ({pistas[0][0]},{pistas[0][1]}).' )
 
         # registrar
         id_reg = self.m_NextId
@@ -92,18 +92,18 @@ class Board:
             self.m_Grid[ r * self.m_Width + c ][ 'region' ] = id_reg
         self.m_Regions[ id_reg ] = ( r1, c1, r2, c2 )
 
-        return ( area, True, f'Region {id_reg} added (Area {area}).' )
+        return ( area, True, f'Region {id_reg} agregada (Area {area}).' )
 
     def remove( self, id_reg ):
         # elimina una region por su id
         if id_reg not in self.m_Regions:
-            return ( False, f'Region {id_reg} not found' )
+            return ( False, f'Region {id_reg} no encontrada' )
         r1, c1, r2, c2 = self.m_Regions[ id_reg ]
         for r in range( r1, r2 + 1 ):
             for c in range( c1, c2 + 1 ):
                 self.m_Grid[ r * self.m_Width + c ][ 'region' ] = None
         del self.m_Regions[ id_reg ]
-        return ( True, f'Region {id_reg} eliminated.' )
+        return ( True, f'Region {id_reg} eliminada.' )
 
     def __str__( self ):
         W = self.m_Width
