@@ -174,7 +174,9 @@ DIFICULTADES = {
     'facil'   : ( 4, 4 ),
     'medio'   : ( 6, 6 ),
     'dificil' : ( 8, 8 ),
-    'experto' : ( 10, 10 )
+    'experto' : ( 10, 10 ),
+    'maestro'  : ( 12, 12 ),
+    'super_maestro' : ( 15, 15 )
 }
 
 

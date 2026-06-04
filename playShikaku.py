@@ -36,7 +36,7 @@ def main( argv ):
             elif nom_player == 'synthetic' or nom_player == 'solver':
                 PlayerClass = SyntheticPlayer
             else:
-                print( f'Jugador "{nom_player}" inválido. Opciones: human, solver' )
+                print( f'Jugador "{nom_player}" inválido. Opciones: human, synthetic, solver' )
                 sys.exit( 1 )
 
             print( f'  Generando puzzle aleatorio ({dif})...' )
@@ -51,7 +51,7 @@ def main( argv ):
     else:
         print( 'Uso: python playShikaku.py random <dificultad> <jugador> [semilla]' )
         print( f'Dificultades: {list(DIFICULTADES.keys())}' )
-        print( 'Jugadores: human, solver' )
+        print( 'Jugadores: human, synthetic, solver' )
         sys.exit( 1 )
 
 

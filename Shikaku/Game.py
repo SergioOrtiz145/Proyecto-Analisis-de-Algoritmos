@@ -25,29 +25,22 @@ class Game:
 
             if tipo == 'colocar':
                 r1, c1, r2, c2 = accion[ 'coords' ]
-                area, ok, msg = self.m_Board.place( r1, c1, r2, c2 )
+                area, ok, msg  = self.m_Board.place( r1, c1, r2, c2 )
 
                 if ok:
-                    # Notificar al jugador el id de la región creada
                     id_reg = self.m_Board.m_NextId - 1
                     self.m_Player.report( id_reg )
                     print( f'  ✓ {msg}' )
                 else:
-                    # Descontar el movimiento si fue inválido
-                    self.m_Player.m_Moves -= 1
                     print( f'  ✗ {msg}' )
 
             elif tipo == 'eliminar':
-                id_reg = accion[ 'id' ]
+                id_reg  = accion[ 'id' ]
                 ok, msg = self.m_Board.remove( id_reg )
 
                 if ok:
-                    # Quitar del historial si estaba ahí
-                    if hasattr( self.m_Player, 'm_History' ) and \
-                       id_reg in self.m_Player.m_History:
-                        self.m_Player.m_History.remove( id_reg )
-                    elif hasattr( self.m_Player, 'm_Historial' ) and \
-                         id_reg in self.m_Player.m_Historial:
+                    if hasattr( self.m_Player, 'm_Historial' ) and \
+                       id_reg in self.m_Player.m_Historial:
                         self.m_Player.m_Historial.remove( id_reg )
                     print( f'  ✓ {msg}' )
                 else:
